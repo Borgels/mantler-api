@@ -1,4 +1,4 @@
-import { supabase } from "./db.js";
+import { getSupabaseClient } from "./db.js";
 
 export interface UsageLogInput {
   orgId: string;
@@ -13,6 +13,7 @@ export interface UsageLogInput {
 }
 
 export async function logUsage(input: UsageLogInput): Promise<void> {
+  const supabase = getSupabaseClient() as any;
   await supabase.from("api_usage_log").insert({
     org_id: input.orgId,
     api_key_id: input.apiKeyId,

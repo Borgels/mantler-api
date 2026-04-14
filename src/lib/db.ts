@@ -6,13 +6,20 @@ function readEnv(name: string): string {
   return value;
 }
 
-export const supabase = createClient(
-  readEnv("SUPABASE_URL"),
-  readEnv("SUPABASE_SERVICE_ROLE_KEY"),
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  },
-);
+let client: ReturnType<typeof createClient> | null = null;
+
+export function getSupabaseClient() {
+  if (!client) {
+    client = createClient(
+      readEnv("SUPABASE_URL"),
+      readEnv("SUPABASE_SERVICE_ROLE_KEY"),
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      },
+    );
+  }
+  return client;
+}

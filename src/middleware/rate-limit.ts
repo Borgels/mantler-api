@@ -6,6 +6,10 @@ import type { AuthContext } from "../types/index.js";
 const WINDOW_MS = 60_000;
 const buckets = new Map<string, { count: number; windowStart: number }>();
 
+export function resetRateLimitBucketsForTests() {
+  buckets.clear();
+}
+
 export async function perKeyRateLimit(c: Context, next: Next) {
   const auth = c.get("auth") as AuthContext | undefined;
   if (!auth) {

@@ -1,6 +1,6 @@
 import type { AuthContext, MantleResolution } from "../types/index.js";
 
-import { supabase } from "./db.js";
+import { getSupabaseClient } from "./db.js";
 
 const runtimePorts: Record<string, number> = {
   ollama: 11434,
@@ -45,25 +45,59 @@ function assertAllowedByFilter(auth: AuthContext, mantle: { base_fingerprint: st
 }
 
 export async function resolveMantleFromModel(model: string, auth: AuthContext): Promise<MantleResolution> {
+  const supabase = getSupabaseClient() as any;
   const trimmedModel = model.trim();
   if (!trimmedModel) throw new Error("missing_model");
   const slashIndex = trimmedModel.indexOf("/");
   const modelWithoutOrg = slashIndex >= 0 ? trimmedModel.slice(slashIndex + 1) : trimmedModel;
 
-  const { data: mantles, error } = await supabase
-    .from("mantles")
-    .select("base_fingerprint,slug,machine_id,model_id,runtime")
-    .eq("org_id", auth.orgId)
-    .or(`slug.eq.${modelWithoutOrg},base_fingerprint.eq.${trimmedModel},model_id.eq.${trimmedModel},model_id.eq.${modelWithoutOrg}`)
-    .eq("visibility", "public")
-    .order("updated_at", { ascending: false })
-    .limit(10);
+  const candidateValues = Array.from(
+    new Set([modelWithoutOrg, trimmedModel].map((value) => value.trim()).filter(Boolean)),
+  );
+  let mantles: Array<{
+    base_fingerprint: string;
+    slug: string;
+    machine_id: string | null;
+    model_id: string;
+    runtime: string;
+  }> = [];
 
-  if (error) {
-    throw new Error(`mantle_lookup_failed:${error.message}`);
+  for (const value of candidateValues) {
+    const [slugMatch, fingerprintMatch, modelIdMatch] = await Promise.all([
+      supabase
+        .from("mantles")
+        .select("base_fingerprint,slug,machine_id,model_id,runtime")
+        .eq("org_id", auth.orgId)
+        .eq("visibility", "public")
+        .eq("slug", value)
+        .limit(1),
+      supabase
+        .from("mantles")
+        .select("base_fingerprint,slug,machine_id,model_id,runtime")
+        .eq("org_id", auth.orgId)
+        .eq("visibility", "public")
+        .eq("base_fingerprint", value)
+        .limit(1),
+      supabase
+        .from("mantles")
+        .select("base_fingerprint,slug,machine_id,model_id,runtime")
+        .eq("org_id", auth.orgId)
+        .eq("visibility", "public")
+        .eq("model_id", value)
+        .limit(5),
+    ]);
+
+    const queries = [slugMatch, fingerprintMatch, modelIdMatch];
+    for (const result of queries) {
+      if (result.error) {
+        throw new Error(`mantle_lookup_failed:${result.error.message}`);
+      }
+      mantles = mantles.concat((result.data ?? []) as typeof mantles);
+    }
+    if (mantles.length > 0) break;
   }
   if (!mantles || mantles.length === 0) throw new Error("model_not_found");
-  const mantle = mantles[0];
+  const mantle = mantles[0]!;
   assertAllowedByFilter(auth, mantle);
   if (!mantle.machine_id) throw new Error("machine_unavailable");
 
@@ -91,6 +125,7 @@ export async function resolveMantleFromModel(model: string, auth: AuthContext): 
 }
 
 export async function listMantleModels(auth: AuthContext): Promise<Array<{ id: string; created: number; ownedBy: string }>> {
+  const supabase = getSupabaseClient() as any;
   const { data: orgRow } = await supabase
     .from("organizations")
     .select("slug")
@@ -107,13 +142,13 @@ export async function listMantleModels(auth: AuthContext): Promise<Array<{ id: s
     .limit(200);
   if (error) throw new Error(`models_lookup_failed:${error.message}`);
 
-  const filtered = (data ?? []).filter((entry) => {
+  const filtered = (data ?? []).filter((entry: { slug: string; base_fingerprint: string; created_at: string }) => {
     if (!auth.mantleFilter || auth.mantleFilter.length === 0) return true;
     const allowed = new Set(auth.mantleFilter);
     return allowed.has(entry.slug) || allowed.has(entry.base_fingerprint);
   });
 
-  return filtered.map((entry) => ({
+  return filtered.map((entry: { slug: string; created_at: string }) => ({
     id: `${orgSlug}/${entry.slug}`,
     created: Math.floor(new Date(entry.created_at).getTime() / 1000),
     ownedBy: orgSlug,

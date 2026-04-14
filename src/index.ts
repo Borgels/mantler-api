@@ -1,6 +1,5 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
 import { authMiddleware } from "./middleware/auth.js";
@@ -18,7 +17,6 @@ type Variables = {
 const app = new Hono<{ Variables: Variables }>();
 
 app.use("*", logger());
-app.use("*", cors());
 
 app.get("/health", (c) => c.json({ ok: true }));
 
