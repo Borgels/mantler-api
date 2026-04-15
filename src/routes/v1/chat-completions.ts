@@ -44,6 +44,10 @@ export function createChatCompletionsRoute(
       const proxied = await deps.proxyChatCompletionFn({
         endpointUrl: resolution.endpointUrl,
         incomingHeaders: c.req.raw.headers,
+        forwardHeaders: {
+          "x-mantler-cluster-node-count": resolution.clusterNodeCount?.toString(),
+          "x-mantler-cluster-topology": resolution.clusterTopology,
+        },
         body: {
           ...parsed.data,
           model: resolution.backendModel,
@@ -63,10 +67,18 @@ export function createChatCompletionsRoute(
         status: proxied.status,
       });
 
+      const responseHeaders = new Headers(proxied.headers);
+      if (typeof resolution.clusterNodeCount === "number") {
+        responseHeaders.set("x-mantler-cluster-node-count", String(resolution.clusterNodeCount));
+      }
+      if (resolution.clusterTopology) {
+        responseHeaders.set("x-mantler-cluster-topology", resolution.clusterTopology);
+      }
+
       return new Response(proxied.body, {
         status: proxied.status,
         statusText: proxied.statusText,
-        headers: proxied.headers,
+        headers: responseHeaders,
       });
     } catch (error) {
       if (resolution) {

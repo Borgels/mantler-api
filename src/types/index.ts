@@ -13,6 +13,8 @@ export interface MantleResolution {
   backendModel: string;
   runtime: string;
   modelAlias: string;
+  clusterNodeCount?: number;
+  clusterTopology?: string;
 }
 
 export interface UsageStats {

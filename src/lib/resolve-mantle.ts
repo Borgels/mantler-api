@@ -36,6 +36,29 @@ function buildEndpointFromMachine(
   return parsed.toString().replace(/\/$/, "");
 }
 
+function extractClusterContext(machinePayload: Record<string, unknown>): {
+  clusterNodeCount?: number;
+  clusterTopology?: string;
+} {
+  const cluster = machinePayload.cluster;
+  if (!cluster || typeof cluster !== "object") {
+    return {};
+  }
+  const clusterRecord = cluster as Record<string, unknown>;
+  const nodeCountRaw = clusterRecord.nodeCount;
+  const nodeCount = typeof nodeCountRaw === "number" && Number.isFinite(nodeCountRaw)
+    ? Math.max(1, Math.trunc(nodeCountRaw))
+    : undefined;
+  const topologyRaw = clusterRecord.topology;
+  const topology = typeof topologyRaw === "string" && topologyRaw.trim()
+    ? topologyRaw.trim()
+    : undefined;
+  return {
+    clusterNodeCount: nodeCount,
+    clusterTopology: topology,
+  };
+}
+
 function assertAllowedByFilter(auth: AuthContext, mantle: { base_fingerprint: string; slug: string }) {
   if (!auth.mantleFilter || auth.mantleFilter.length === 0) return;
   const allowed = new Set(auth.mantleFilter.map((entry) => entry.trim()).filter(Boolean));
@@ -113,6 +136,7 @@ export async function resolveMantleFromModel(model: string, auth: AuthContext): 
 
   const endpointUrl = buildEndpointFromMachine(machineRow.payload as Record<string, unknown>, mantle.runtime);
   if (!endpointUrl) throw new Error("endpoint_unavailable");
+  const clusterContext = extractClusterContext(machineRow.payload as Record<string, unknown>);
 
   return {
     mantleFingerprint: mantle.base_fingerprint,
@@ -121,6 +145,8 @@ export async function resolveMantleFromModel(model: string, auth: AuthContext): 
     backendModel: mantle.model_id,
     runtime: mantle.runtime,
     modelAlias: modelWithoutOrg || mantle.slug,
+    clusterNodeCount: clusterContext.clusterNodeCount,
+    clusterTopology: clusterContext.clusterTopology,
   };
 }
 
