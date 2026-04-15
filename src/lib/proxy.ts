@@ -48,6 +48,7 @@ export async function proxyChatCompletion(options: {
   endpointUrl: string;
   incomingHeaders: Headers;
   body: Record<string, unknown>;
+  forwardHeaders?: Record<string, string | undefined>;
   timeoutMs?: number;
 }): Promise<{
   status: number;
@@ -56,9 +57,17 @@ export async function proxyChatCompletion(options: {
   body: ReadableStream<Uint8Array> | null;
   usage: Promise<UsageStats>;
 }> {
+  const requestHeaders = copyHeaders(options.incomingHeaders);
+  if (options.forwardHeaders) {
+    for (const [key, value] of Object.entries(options.forwardHeaders)) {
+      const trimmed = value?.trim();
+      if (!trimmed) continue;
+      requestHeaders.set(key, trimmed);
+    }
+  }
   const upstream = await fetch(buildCompletionEndpoint(options.endpointUrl), {
     method: "POST",
-    headers: copyHeaders(options.incomingHeaders),
+    headers: requestHeaders,
     body: JSON.stringify(options.body),
     signal: AbortSignal.timeout(options.timeoutMs ?? 300_000),
   });

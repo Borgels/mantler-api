@@ -7,6 +7,7 @@ import { createChatCompletionsRoute } from "../routes/v1/chat-completions.js";
 
 function buildApp(overrides?: {
   resolveError?: Error;
+  onProxyPayload?: (payload: Record<string, unknown>) => void;
 }) {
   const usageLogs: Array<Record<string, unknown>> = [];
   const route = createChatCompletionsRoute({
@@ -19,9 +20,12 @@ function buildApp(overrides?: {
         backendModel: "qwen2.5:0.5b",
         runtime: "ollama",
         modelAlias: "org/qwen",
+        clusterNodeCount: 3,
+        clusterTopology: "qsfp_ring",
       };
     },
     proxyChatCompletionFn: async (payload) => {
+      overrides?.onProxyPayload?.(payload as unknown as Record<string, unknown>);
       const body = payload.body as Record<string, unknown>;
       const encoded = new TextEncoder().encode(JSON.stringify({ ok: true, model: body.model }));
       return {
@@ -76,6 +80,31 @@ test("chat completions proxies request and logs usage", async () => {
   const body = await response.json();
   assert.equal(body.model, "qwen2.5:0.5b");
   assert.equal(usageLogs.length, 1);
+  assert.equal(response.headers.get("x-mantler-cluster-node-count"), "3");
+  assert.equal(response.headers.get("x-mantler-cluster-topology"), "qsfp_ring");
+});
+
+test("chat completions forwards cluster context headers upstream", async () => {
+  let observedHeaders: Headers | null = null;
+  const { app } = buildApp({
+    onProxyPayload: (payload) => {
+      const incomingHeaders = payload.forwardHeaders;
+      if (incomingHeaders && typeof incomingHeaders === "object") {
+        observedHeaders = new Headers(incomingHeaders as Record<string, string>);
+      }
+    },
+  });
+  const response = await app.request("http://local.test/v1/chat/completions", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      model: "org/qwen",
+      messages: [{ role: "user", content: "hello" }],
+    }),
+  });
+  assert.equal(response.status, 200);
+  assert.equal(observedHeaders?.get("x-mantler-cluster-node-count"), "3");
+  assert.equal(observedHeaders?.get("x-mantler-cluster-topology"), "qsfp_ring");
 });
 
 test("chat completions maps resolver model_not_found to 404", async () => {
