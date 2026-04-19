@@ -10,4 +10,5 @@ completionsRoute.post("/", (c) =>
     400,
     "Legacy /v1/completions is not supported. Use /v1/chat/completions.",
     "unsupported_endpoint",
-  ));
+  ),
+);

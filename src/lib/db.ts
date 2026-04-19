@@ -2,20 +2,29 @@ import { createClient } from "@supabase/supabase-js";
 
 type GenericDatabase = {
   public: {
-    Tables: Record<string, {
-      Row: Record<string, unknown>;
-      Insert: Record<string, unknown>;
-      Update: Record<string, unknown>;
-      Relationships: never[];
-    }>;
-    Views: Record<string, {
-      Row: Record<string, unknown>;
-      Relationships: never[];
-    }>;
-    Functions: Record<string, {
-      Args: Record<string, unknown>;
-      Returns: unknown;
-    }>;
+    Tables: Record<
+      string,
+      {
+        Row: Record<string, unknown>;
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: never[];
+      }
+    >;
+    Views: Record<
+      string,
+      {
+        Row: Record<string, unknown>;
+        Relationships: never[];
+      }
+    >;
+    Functions: Record<
+      string,
+      {
+        Args: Record<string, unknown>;
+        Returns: unknown;
+      }
+    >;
     Enums: Record<string, string>;
     CompositeTypes: Record<string, unknown>;
   };

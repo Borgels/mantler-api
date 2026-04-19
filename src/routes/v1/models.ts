@@ -8,7 +8,9 @@ interface ModelsRouteDeps {
   listMantleModelsFn: typeof listMantleModels;
 }
 
-export function createModelsRoute(deps: ModelsRouteDeps = { listMantleModelsFn: listMantleModels }) {
+export function createModelsRoute(
+  deps: ModelsRouteDeps = { listMantleModelsFn: listMantleModels },
+) {
   const route = new Hono();
 
   route.get("/", async (c) => {

@@ -32,9 +32,12 @@ function createSupabaseStub(row: Record<string, unknown> | null) {
 
 test("auth middleware rejects missing bearer token", async () => {
   const app = new Hono();
-  app.use("*", createAuthMiddleware({
-    getSupabaseClientFn: () => createSupabaseStub(null) as never,
-  }));
+  app.use(
+    "*",
+    createAuthMiddleware({
+      getSupabaseClientFn: () => createSupabaseStub(null) as never,
+    }),
+  );
   app.get("/", (c) => c.json({ ok: true }));
 
   const response = await app.request("http://local.test/");
@@ -43,17 +46,21 @@ test("auth middleware rejects missing bearer token", async () => {
 
 test("auth middleware sets auth context for valid key", async () => {
   const app = new Hono();
-  app.use("*", createAuthMiddleware({
-    getSupabaseClientFn: () => createSupabaseStub({
-      id: "key-1",
-      org_id: "org-1",
-      scopes: ["inference"],
-      mantle_filter: null,
-      rate_limit_rpm: 15,
-      expires_at: null,
-      revoked_at: null,
-    }) as never,
-  }));
+  app.use(
+    "*",
+    createAuthMiddleware({
+      getSupabaseClientFn: () =>
+        createSupabaseStub({
+          id: "key-1",
+          org_id: "org-1",
+          scopes: ["inference"],
+          mantle_filter: null,
+          rate_limit_rpm: 15,
+          expires_at: null,
+          revoked_at: null,
+        }) as never,
+    }),
+  );
   app.get("/", (c) => c.json(c.get("auth")));
 
   const response = await app.request("http://local.test/", {

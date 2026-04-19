@@ -7,9 +7,11 @@ import { proxyChatCompletion } from "../../lib/proxy.js";
 import { resolveMantleFromModel } from "../../lib/resolve-mantle.js";
 import type { AuthContext } from "../../types/index.js";
 
-const requestSchema = z.object({
-  model: z.string().trim().min(1),
-}).passthrough();
+const requestSchema = z
+  .object({
+    model: z.string().trim().min(1),
+  })
+  .passthrough();
 
 interface ChatCompletionsRouteDeps {
   resolveMantleFromModelFn: typeof resolveMantleFromModel;
@@ -30,9 +32,7 @@ export function createChatCompletionsRoute(
     const startedAt = Date.now();
     const auth = (c as unknown as { get: (key: string) => AuthContext }).get("auth");
     let statusForLog = 500;
-    let resolution:
-      | Awaited<ReturnType<typeof resolveMantleFromModel>>
-      | null = null;
+    let resolution: Awaited<ReturnType<typeof resolveMantleFromModel>> | null = null;
 
     try {
       const body = await c.req.json().catch(() => null);
@@ -95,9 +95,12 @@ export function createChatCompletionsRoute(
         });
       }
       const message = error instanceof Error ? error.message : "Inference request failed";
-      if (message === "missing_model") return openAiError(c, 400, "Missing model in request body", "invalid_request_error");
-      if (message === "model_not_found") return openAiError(c, 404, "Model not found", "model_not_found");
-      if (message === "model_not_allowed") return openAiError(c, 403, "Model is not allowed for this key", "forbidden");
+      if (message === "missing_model")
+        return openAiError(c, 400, "Missing model in request body", "invalid_request_error");
+      if (message === "model_not_found")
+        return openAiError(c, 404, "Model not found", "model_not_found");
+      if (message === "model_not_allowed")
+        return openAiError(c, 403, "Model is not allowed for this key", "forbidden");
       if (message === "machine_unavailable" || message === "endpoint_unavailable") {
         return openAiError(c, 502, "Model endpoint unavailable", "upstream_unavailable");
       }

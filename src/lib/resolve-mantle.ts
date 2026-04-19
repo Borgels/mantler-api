@@ -20,9 +20,8 @@ function buildEndpointFromMachine(
   machinePayload: Record<string, unknown>,
   runtime: string,
 ): string | null {
-  const hostname = typeof machinePayload.hostname === "string"
-    ? machinePayload.hostname.trim()
-    : "";
+  const hostname =
+    typeof machinePayload.hostname === "string" ? machinePayload.hostname.trim() : "";
   const addresses = Array.isArray(machinePayload.reportedAddresses)
     ? machinePayload.reportedAddresses.filter((value): value is string => typeof value === "string")
     : [];
@@ -46,20 +45,23 @@ function extractClusterContext(machinePayload: Record<string, unknown>): {
   }
   const clusterRecord = cluster as Record<string, unknown>;
   const nodeCountRaw = clusterRecord.nodeCount;
-  const nodeCount = typeof nodeCountRaw === "number" && Number.isFinite(nodeCountRaw)
-    ? Math.max(1, Math.trunc(nodeCountRaw))
-    : undefined;
+  const nodeCount =
+    typeof nodeCountRaw === "number" && Number.isFinite(nodeCountRaw)
+      ? Math.max(1, Math.trunc(nodeCountRaw))
+      : undefined;
   const topologyRaw = clusterRecord.topology;
-  const topology = typeof topologyRaw === "string" && topologyRaw.trim()
-    ? topologyRaw.trim()
-    : undefined;
+  const topology =
+    typeof topologyRaw === "string" && topologyRaw.trim() ? topologyRaw.trim() : undefined;
   return {
     clusterNodeCount: nodeCount,
     clusterTopology: topology,
   };
 }
 
-function assertAllowedByFilter(auth: AuthContext, mantle: { base_fingerprint: string; slug: string }) {
+function assertAllowedByFilter(
+  auth: AuthContext,
+  mantle: { base_fingerprint: string; slug: string },
+) {
   if (!auth.mantleFilter || auth.mantleFilter.length === 0) return;
   const allowed = new Set(auth.mantleFilter.map((entry) => entry.trim()).filter(Boolean));
   if (!allowed.has(mantle.base_fingerprint) && !allowed.has(mantle.slug)) {
@@ -67,7 +69,10 @@ function assertAllowedByFilter(auth: AuthContext, mantle: { base_fingerprint: st
   }
 }
 
-export async function resolveMantleFromModel(model: string, auth: AuthContext): Promise<MantleResolution> {
+export async function resolveMantleFromModel(
+  model: string,
+  auth: AuthContext,
+): Promise<MantleResolution> {
   const supabase = getSupabaseClient();
   const trimmedModel = model.trim();
   if (!trimmedModel) throw new Error("missing_model");
@@ -134,7 +139,10 @@ export async function resolveMantleFromModel(model: string, auth: AuthContext): 
     throw new Error("machine_unavailable");
   }
 
-  const endpointUrl = buildEndpointFromMachine(machineRow.payload as Record<string, unknown>, mantle.runtime);
+  const endpointUrl = buildEndpointFromMachine(
+    machineRow.payload as Record<string, unknown>,
+    mantle.runtime,
+  );
   if (!endpointUrl) throw new Error("endpoint_unavailable");
   const clusterContext = extractClusterContext(machineRow.payload as Record<string, unknown>);
 
@@ -150,7 +158,9 @@ export async function resolveMantleFromModel(model: string, auth: AuthContext): 
   };
 }
 
-export async function listMantleModels(auth: AuthContext): Promise<Array<{ id: string; created: number; ownedBy: string }>> {
+export async function listMantleModels(
+  auth: AuthContext,
+): Promise<Array<{ id: string; created: number; ownedBy: string }>> {
   const supabase = getSupabaseClient();
   const { data: orgRow } = await supabase
     .from("organizations")
@@ -168,7 +178,11 @@ export async function listMantleModels(auth: AuthContext): Promise<Array<{ id: s
     .limit(200);
   if (error) throw new Error(`models_lookup_failed:${error.message}`);
 
-  const rows = (data ?? []) as Array<{ slug: string; base_fingerprint: string; created_at: string }>;
+  const rows = (data ?? []) as Array<{
+    slug: string;
+    base_fingerprint: string;
+    created_at: string;
+  }>;
   const filtered = rows.filter((entry) => {
     if (!auth.mantleFilter || auth.mantleFilter.length === 0) return true;
     const allowed = new Set(auth.mantleFilter);

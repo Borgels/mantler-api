@@ -34,10 +34,14 @@ function extractUsageFromLine(line: string): UsageStats | null {
   const payload = line.slice("data:".length).trim();
   if (!payload || payload === "[DONE]") return null;
   try {
-    const parsed = JSON.parse(payload) as { usage?: { prompt_tokens?: unknown; completion_tokens?: unknown } };
+    const parsed = JSON.parse(payload) as {
+      usage?: { prompt_tokens?: unknown; completion_tokens?: unknown };
+    };
     if (!parsed.usage) return null;
-    const prompt = typeof parsed.usage.prompt_tokens === "number" ? parsed.usage.prompt_tokens : null;
-    const completion = typeof parsed.usage.completion_tokens === "number" ? parsed.usage.completion_tokens : null;
+    const prompt =
+      typeof parsed.usage.prompt_tokens === "number" ? parsed.usage.prompt_tokens : null;
+    const completion =
+      typeof parsed.usage.completion_tokens === "number" ? parsed.usage.completion_tokens : null;
     return { promptTokens: prompt, completionTokens: completion };
   } catch {
     return null;
@@ -92,13 +96,20 @@ export async function proxyChatCompletion(options: {
 
   if (!isSse) {
     const clone = upstream.clone();
-    void clone.json().then((json) => {
-      const usageBlock = (json as { usage?: { prompt_tokens?: unknown; completion_tokens?: unknown } })?.usage;
-      usageResolver({
-        promptTokens: typeof usageBlock?.prompt_tokens === "number" ? usageBlock.prompt_tokens : null,
-        completionTokens: typeof usageBlock?.completion_tokens === "number" ? usageBlock.completion_tokens : null,
-      });
-    }).catch(() => usageResolver({ promptTokens: null, completionTokens: null }));
+    void clone
+      .json()
+      .then((json) => {
+        const usageBlock = (
+          json as { usage?: { prompt_tokens?: unknown; completion_tokens?: unknown } }
+        )?.usage;
+        usageResolver({
+          promptTokens:
+            typeof usageBlock?.prompt_tokens === "number" ? usageBlock.prompt_tokens : null,
+          completionTokens:
+            typeof usageBlock?.completion_tokens === "number" ? usageBlock.completion_tokens : null,
+        });
+      })
+      .catch(() => usageResolver({ promptTokens: null, completionTokens: null }));
     return {
       status: upstream.status,
       statusText: upstream.statusText,

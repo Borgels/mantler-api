@@ -14,7 +14,9 @@ interface AuthMiddlewareDeps {
   getSupabaseClientFn: typeof getSupabaseClient;
 }
 
-export function createAuthMiddleware(deps: AuthMiddlewareDeps = { getSupabaseClientFn: getSupabaseClient }) {
+export function createAuthMiddleware(
+  deps: AuthMiddlewareDeps = { getSupabaseClientFn: getSupabaseClient },
+) {
   return async function authMiddleware(c: Context, next: Next) {
     const authHeader = c.req.header("authorization");
     if (!authHeader?.toLowerCase().startsWith("bearer ")) {
@@ -69,7 +71,10 @@ export function createAuthMiddleware(deps: AuthMiddlewareDeps = { getSupabaseCli
     };
     c.set("auth", auth);
 
-    void supabase.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", row.id);
+    void supabase
+      .from("api_keys")
+      .update({ last_used_at: new Date().toISOString() })
+      .eq("id", row.id);
     await next();
   };
 }
