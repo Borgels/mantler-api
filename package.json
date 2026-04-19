@@ -12,7 +12,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "openapi:export": "tsx scripts/export-openapi.ts",
-    "openapi:check": "tsx scripts/export-openapi.ts && git diff --exit-code openapi.json",
+    "openapi:check": "tsx scripts/export-openapi.ts && prettier --write openapi.json && git diff --exit-code openapi.json",
     "postinstall": "lefthook install"
   },
   "dependencies": {
