@@ -7,7 +7,7 @@ pre-commit:
 commit-msg:
   commands:
     commitlint:
-      run: npm exec commitlint -- --edit {1}
+      run: npm exec commitlint -- --edit .git/COMMIT_EDITMSG
 # EXAMPLE USAGE:
 #
 #   Refer for explanation to following link:
