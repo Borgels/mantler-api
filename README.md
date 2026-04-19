@@ -1,50 +1,47 @@
 # mantler-api
 
 [![CI](https://github.com/Borgels/mantler-api/actions/workflows/ci.yml/badge.svg)](https://github.com/Borgels/mantler-api/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Borgels/mantler-api/actions/workflows/codeql.yml/badge.svg)](https://github.com/Borgels/mantler-api/actions/workflows/codeql.yml)
+[![Release](https://img.shields.io/github/v/release/Borgels/mantler-api)](https://github.com/Borgels/mantler-api/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![npm](https://img.shields.io/badge/runtime-nodejs-green)](https://nodejs.org)
+
+Status: initial public release track (`v0.1.x`).
 
 OpenAI-compatible gateway for exposing Mantler mantles as `/v1/*` inference endpoints.
 
-## Documentation
+```text
+At a glance
+- What this repo is: the API gateway layer translating OpenAI-compatible requests to Mantler backends.
+- What it is not: the full control plane UI/business app (see mantler).
+- Core endpoints: /v1/models, /v1/chat/completions, /v1/completions.
+- Try it locally: npm install && npm run dev
+- Probe health: curl -s http://localhost:8787/health
+```
+
+## Quickstart
+
+```bash
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Server default: `http://localhost:8787`.
+
+## Links
 
 - [Docs home](https://docs.mantler.ai)
 - [API overview](https://docs.mantler.ai/api)
 - [Authentication](https://docs.mantler.ai/api/authentication)
 - [Endpoints](https://docs.mantler.ai/api/endpoints)
 - [Usage and limits](https://docs.mantler.ai/api/usage-and-limits)
+- [Live OpenAPI docs](https://docs.mantler.ai/api/openapi-reference)
 
-## Run locally
+## Security
 
-1. Copy `.env.example` to `.env` and set Supabase values.
-2. Install dependencies:
-   - `npm install`
-3. Start:
-   - `npm run dev`
+See [SECURITY.md](SECURITY.md) and rate-limit/auth middleware under `src/middleware/`.
 
-Default local URL: `http://localhost:8787/v1`
+## License
 
-## Endpoints
-
-- `GET /health`
-- `GET /v1/models`
-- `POST /v1/chat/completions`
-- `POST /v1/completions` (returns unsupported endpoint error)
-
-## Fly.io deployment
-
-1. Create app:
-   - `fly launch --name mantler-api --no-deploy`
-2. Set secrets:
-   - `fly secrets set SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=...`
-3. Deploy:
-   - `fly deploy`
-
-## DNS
-
-After deploy, create DNS record:
-
-- `api.mantler.dev` CNAME -> `<fly-app>.fly.dev`
-
-Then issue certificate:
-
-- `fly certs create api.mantler.dev`
+[MIT](LICENSE)
