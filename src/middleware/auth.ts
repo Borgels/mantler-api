@@ -29,7 +29,7 @@ export function createAuthMiddleware(deps: AuthMiddlewareDeps = { getSupabaseCli
     }
     let supabase;
     try {
-      supabase = deps.getSupabaseClientFn() as any;
+      supabase = deps.getSupabaseClientFn();
     } catch {
       return openAiError(c, 503, "Gateway is not configured", "service_unavailable");
     }

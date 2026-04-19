@@ -68,7 +68,7 @@ function assertAllowedByFilter(auth: AuthContext, mantle: { base_fingerprint: st
 }
 
 export async function resolveMantleFromModel(model: string, auth: AuthContext): Promise<MantleResolution> {
-  const supabase = getSupabaseClient() as any;
+  const supabase = getSupabaseClient();
   const trimmedModel = model.trim();
   if (!trimmedModel) throw new Error("missing_model");
   const slashIndex = trimmedModel.indexOf("/");
@@ -151,13 +151,13 @@ export async function resolveMantleFromModel(model: string, auth: AuthContext): 
 }
 
 export async function listMantleModels(auth: AuthContext): Promise<Array<{ id: string; created: number; ownedBy: string }>> {
-  const supabase = getSupabaseClient() as any;
+  const supabase = getSupabaseClient();
   const { data: orgRow } = await supabase
     .from("organizations")
     .select("slug")
     .eq("id", auth.orgId)
     .maybeSingle();
-  const orgSlug = orgRow?.slug ?? "org";
+  const orgSlug = typeof orgRow?.slug === "string" ? orgRow.slug : "org";
 
   const { data, error } = await supabase
     .from("mantles")
@@ -168,13 +168,14 @@ export async function listMantleModels(auth: AuthContext): Promise<Array<{ id: s
     .limit(200);
   if (error) throw new Error(`models_lookup_failed:${error.message}`);
 
-  const filtered = (data ?? []).filter((entry: { slug: string; base_fingerprint: string; created_at: string }) => {
+  const rows = (data ?? []) as Array<{ slug: string; base_fingerprint: string; created_at: string }>;
+  const filtered = rows.filter((entry) => {
     if (!auth.mantleFilter || auth.mantleFilter.length === 0) return true;
     const allowed = new Set(auth.mantleFilter);
     return allowed.has(entry.slug) || allowed.has(entry.base_fingerprint);
   });
 
-  return filtered.map((entry: { slug: string; created_at: string }) => ({
+  return filtered.map((entry) => ({
     id: `${orgSlug}/${entry.slug}`,
     created: Math.floor(new Date(entry.created_at).getTime() / 1000),
     ownedBy: orgSlug,

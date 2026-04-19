@@ -14,7 +14,7 @@ npm install
 3. Configure environment variables:
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
 4. Run local development:

@@ -1,6 +1,17 @@
 # mantler-api
 
+[![CI](https://github.com/Borgels/mantler-api/actions/workflows/ci.yml/badge.svg)](https://github.com/Borgels/mantler-api/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 OpenAI-compatible gateway for exposing Mantler mantles as `/v1/*` inference endpoints.
+
+## Documentation
+
+- [Docs home](https://docs.mantler.ai)
+- [API overview](https://docs.mantler.ai/api)
+- [Authentication](https://docs.mantler.ai/api/authentication)
+- [Endpoints](https://docs.mantler.ai/api/endpoints)
+- [Usage and limits](https://docs.mantler.ai/api/usage-and-limits)
 
 ## Run locally
 
