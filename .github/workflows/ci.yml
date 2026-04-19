@@ -37,5 +37,8 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Check OpenAPI snapshot
+        run: npm run openapi:check
+
       - name: Build
         run: npm run build
