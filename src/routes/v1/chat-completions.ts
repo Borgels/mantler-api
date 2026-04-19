@@ -1,4 +1,5 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import type { Context } from "hono";
 
 import { logUsage } from "../../lib/metering.js";
 import { openAiError } from "../../lib/openai-errors.js";
@@ -47,7 +48,7 @@ export function createChatCompletionsRoute(
     },
   });
 
-  route.openapi(chatCompletionsOpenApiRoute, async (c) => {
+  route.openapi(chatCompletionsOpenApiRoute, (async (c: Context) => {
     const startedAt = Date.now();
     const auth = (c as unknown as { get: (key: string) => AuthContext }).get("auth");
     let statusForLog = 500;
@@ -57,12 +58,7 @@ export function createChatCompletionsRoute(
       const body = await c.req.json().catch(() => null);
       const parsed = requestSchema.safeParse(body);
       if (!parsed.success) {
-        return openAiError(
-          c,
-          400,
-          "Missing model in request body",
-          "invalid_request_error",
-        ) as Response;
+        return openAiError(c, 400, "Missing model in request body", "invalid_request_error");
       }
       resolution = await deps.resolveMantleFromModelFn(parsed.data.model, auth);
       const proxied = await deps.proxyChatCompletionFn({
@@ -120,27 +116,17 @@ export function createChatCompletionsRoute(
       }
       const message = error instanceof Error ? error.message : "Inference request failed";
       if (message === "missing_model")
-        return openAiError(
-          c,
-          400,
-          "Missing model in request body",
-          "invalid_request_error",
-        ) as Response;
+        return openAiError(c, 400, "Missing model in request body", "invalid_request_error");
       if (message === "model_not_found")
-        return openAiError(c, 404, "Model not found", "model_not_found") as Response;
+        return openAiError(c, 404, "Model not found", "model_not_found");
       if (message === "model_not_allowed")
-        return openAiError(c, 403, "Model is not allowed for this key", "forbidden") as Response;
+        return openAiError(c, 403, "Model is not allowed for this key", "forbidden");
       if (message === "machine_unavailable" || message === "endpoint_unavailable") {
-        return openAiError(
-          c,
-          502,
-          "Model endpoint unavailable",
-          "upstream_unavailable",
-        ) as Response;
+        return openAiError(c, 502, "Model endpoint unavailable", "upstream_unavailable");
       }
-      return openAiError(c, 502, message, "upstream_error") as Response;
+      return openAiError(c, 502, message, "upstream_error");
     }
-  });
+  }) as never);
 
   return route;
 }

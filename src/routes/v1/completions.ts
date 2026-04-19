@@ -1,4 +1,5 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import type { Context } from "hono";
 
 import { openAiError } from "../../lib/openai-errors.js";
 
@@ -26,13 +27,10 @@ const unsupportedCompletionsRoute = createRoute({
   },
 });
 
-completionsRoute.openapi(
-  unsupportedCompletionsRoute,
-  (c) =>
-    openAiError(
-      c,
-      400,
-      "Legacy /v1/completions is not supported. Use /v1/chat/completions.",
-      "unsupported_endpoint",
-    ) as Response,
-);
+completionsRoute.openapi(unsupportedCompletionsRoute, ((c: Context) =>
+  openAiError(
+    c,
+    400,
+    "Legacy /v1/completions is not supported. Use /v1/chat/completions.",
+    "unsupported_endpoint",
+  )) as never);

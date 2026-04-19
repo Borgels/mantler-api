@@ -1,4 +1,5 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import type { Context } from "hono";
 
 import { listMantleModels } from "../../lib/resolve-mantle.js";
 import { openAiError } from "../../lib/openai-errors.js";
@@ -40,7 +41,7 @@ export function createModelsRoute(
     },
   });
 
-  route.openapi(listModelsRoute, async (c) => {
+  route.openapi(listModelsRoute, (async (c: Context) => {
     try {
       const auth = (c as unknown as { get: (key: string) => AuthContext }).get("auth");
       const models = await deps.listMantleModelsFn(auth);
@@ -60,9 +61,9 @@ export function createModelsRoute(
         500,
         error instanceof Error ? error.message : "Failed to list models",
         "internal_error",
-      ) as Response;
+      );
     }
-  });
+  }) as never);
 
   return route;
 }
